@@ -2445,7 +2445,7 @@ sub collect_node_info
 	$self->nmisng->log->debug("Starting Collect Node Info, node $nodename");
 
 	# clear any node reset indication from the last run
-  delete $catchall_data->{admin}->{node_was_reset};
+	delete $catchall_data->{admin}->{node_was_reset};
 
 	# capture previous states now for checking of this node
 	my $sysObjectID  = $catchall_data->{sysObjectID};
@@ -7686,6 +7686,8 @@ sub collect_server_data
 						if ($storage_target->{hrStorageDescr} eq 'Physical memory' && defined($cached_units) && defined($buffer_units)){
 							$D->{hrMemAvail}{value} = $S->{reach}{memfree} + $cached_units + $buffer_units;
 							$storage_target->{hrMemAvail} = $D->{hrMemAvail}{value};
+						} else {
+							$self->nmisng->log->info("collect_server_data trying to calculate available ")
 						}
 
 						if ( ( my $db = $S->create_update_rrd( data => $D, type => $subconcept, inventory => $inventory ) ) )
@@ -9121,18 +9123,29 @@ sub collect
 			# fixme: why no error handling for any of these?
 
 			# get node data and store in rrd
+			my $time_start = Time::HiRes::time;
 			$self->collect_node_data(sys => $S, catchall_inventory => $catchall_inventory);
+			$catchall_data->{collect_node_data_time} = Time::HiRes::time - $time_start;
 			# get intf data and store in rrd
+			$time_start = Time::HiRes::time;
 			my $ids = $self->get_inventory_ids( concept => 'interface' );
 			$self->collect_intf_data(sys => $S, catchall_inventory => $catchall_inventory) if( @$ids > 0);
+			$catchall_data->{collect_intf_data_time} = Time::HiRes::time - $time_start;
 
+			$time_start = Time::HiRes::time;
 			$self->collect_systemhealth_data(sys => $S, catchall_inventory => $catchall_inventory);
+			$catchall_data->{collect_systemhealth_data_time} = Time::HiRes::time - $time_start;
+
 			$self->collect_cbqos(sys => $S, update => 0, catchall_inventory => $catchall_inventory);
-
+			
+			$time_start = Time::HiRes::time;
 			$self->collect_server_data( sys => $S, catchall_inventory => $catchall_inventory );
-
+			$catchall_data->{collect_server_data_time} = Time::HiRes::time - $time_start;
+			
 			# Custom Alerts, includes process_alerts
+			$time_start = Time::HiRes::time;
 			$self->handle_custom_alerts(sys => $S, catchall_inventory => $catchall_inventory);
+			$catchall_data->{handle_custom_alerts_time} = Time::HiRes::time - $time_start;
 		}
 		else
 		{
@@ -9149,10 +9162,13 @@ sub collect
 
 	# Need to poll services under all circumstances, i.e. if no ping, or node down or set to no collect
 	# but try snmp services only if snmp is actually ok
+	my $services_time_start = Time::HiRes::time;
 	$self->collect_services( sys => $S,
 													 snmp => NMISNG::Util::getbool( $catchall_data->{snmpdown} ) ? 'false' : 'true',
 													 force => $force,
 													 catchall_inventory => $catchall_inventory );
+	my $services_time = Time::HiRes::time - $services_time_start;
+	$catchall_data->{collect_services_time} = $services_time;
 
 	# don't let that function perform the rrd update, we want to add the polltime to it!
 	my $reachdata = $self->compute_reachability( sys => $S, delayupdate => 1, catchall_inventory => $catchall_inventory );
@@ -9200,6 +9216,7 @@ sub collect
 	$self->nmisng->log->debug("polltime for $name was $polltime");
 	$reachdata->{polltime} = {value => $polltime, option => "gauge,0:U"};
 	$reachdata->{polldelta} = {value => $catchall_data->{collectPollDelta}, option => "gauge,0:U"};
+	#$catchall_data->{polltime} = $polltime;
 
 	# parrot the previous reading's update time
 	my $prevval = "U";
