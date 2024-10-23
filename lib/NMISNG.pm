@@ -2863,8 +2863,8 @@ sub node
 	elsif ( $modeldata->count() > 1 )
 	{
 		my @names = map { $_->{name} } @{$modeldata->data()};
-		$self->log->debug( "Node request returned more than one node, args" . Dumper( \%args ) );
-		$self->log->warn( "Node request returned more than one node, names:" . join( ",", @names ) );
+		$self->log->debug( sub { "Node request returned more than one node, args" . Dumper( \%args )} );
+		$self->log->warn( "Node request returned ".scalar(@names)." nodes!".NMISNG::Log::trace() );
 
 		# Try filter by cluster_id
 		if (($args{name} || $args{filter}{name}) && !$args{filter}{cluster_id}  )
