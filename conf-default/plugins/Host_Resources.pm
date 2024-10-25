@@ -255,10 +255,10 @@ sub collect_plugin
 					# 	index  => $data->{index},
 					# 	inventory => $host_inventory 
 					# );
+					$data->{hrStorageSummary} = join(" ",@{$data->{hrStorageSummary}});
 				}
 				
-				# Save the data
-				$data->{hrStorageSummary} = join(" ",@{$data->{hrStorageSummary}});
+				# Save the data				
 	            $host_inventory->data($data); # set changed info
 	            (undef,$error) = $host_inventory->save( node => $node ); # and save to the db
 	            $NG->log->error("Failed to save inventory for ".$data->{hrStorageTypeName}. " : $error")
