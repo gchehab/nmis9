@@ -36,7 +36,7 @@ my $test_priv = {
 };
 
 
-my $error = NMISNG::Util::writeHashtoFile(file=> "/usr/local/nmis9/conf/TEST_auth_ldap_privs_file.nmis", data=>$test_priv);
+my $error = NMISNG::Util::writeHashtoFile(file=> "/usr/local/nmis9/conf/AuthLdapPrivs.nmis", data=>$test_priv);
 if ($error) {
     diag("Error writing to file: $error");
     exit 1;
@@ -57,7 +57,6 @@ $config->{auth_ldap_base} = 'dc=planetexpress,dc=com';
 $config->{auth_ldap_attr} = 'uid';
 $config->{auth_ldap_acc} = 'cn=admin,dc=planetexpress,dc=com';
 $config->{auth_ldap_psw} = 'GoodNewsEveryone';
-$config->{auth_ldap_privs_file} = 'TEST_auth_ldap_privs_file.nmis';
 $config->{auth_ldap_privs} = 1;
 
 my $auth = NMISNG::Auth->new(conf => $config);
@@ -154,7 +153,7 @@ for my $test_case (@test_cases) {
 
 
 # Clean up
-unlink '/usr/local/nmis9/conf/TEST_auth_ldap_privs_file.nmis';
+unlink '/usr/local/nmis9/conf/AuthLdapPrivs.nmis';
 
 
 done_testing;
