@@ -1542,6 +1542,23 @@ sub save
 	# note also: node_admin's export and a few others use the raw db, so need to know this
 	my %dbsafeovers = map { "==".Mojo::Util::b64_encode($_,'') => $self->{_overrides}->{$_} } (keys %{$self->{_overrides}});
 
+	my $configuration = $self->configuration();
+	my $made_config_changes = 0;
+	# Threshold not defined, set to true by default
+	# this was moved from validate
+	if (!defined($configuration->{threshold})) {
+		$configuration->{threshold} = 1; # make sure changes we make in the record are also in the object		
+		$made_config_changes++;
+		$self->nmisng->log->info("Threshold not defined. Setting to true by default");
+	}
+	# is this is an update model could be empty, in that case make it automatic
+	if( !$self->is_new && $configuration->{model} eq '' ) {
+		$configuration->{model} = 'automatic'; # make sure changes we make in the record are also in the object		
+		$made_config_changes++;
+		$self->nmisng->log->info("model empty, setting it to automatic");
+	}
+	$self->configuration( $configuration ) if( $made_config_changes );
+
 	my ($result, $op);
 	my %entry = ( uuid => $self->{uuid},
 								name => NMISNG::DB::make_string($self->{_name}), # must treat as string even if it looks like a number
@@ -1565,16 +1582,6 @@ sub save
 		if( defined($entry{configuration}{$prop_name}) && $entry{configuration}{$prop_name} =~ /^[0-9]+$/ ) { 
 			$entry{configuration}{$prop_name} = NMISNG::DB::make_string( $entry{configuration}{$prop_name} );
 		}
-	}
-	# Threshold not defined, set to true by default
-	# this was moved from validate
-	if (!defined($entry{configuration}{threshold})) {
-		$entry{configuration}{threshold} = 1;
-		$self->nmisng->log->info("Threshold not defined. Setting to true by default");
-	}
-	# is this is an update model could be empty, in that case make it automatic
-	if( !$self->is_new && $entry{configuration}{model} eq '' ) {
-		$entry{configuration}{model} = 'automatic';
 	}
 
 	if ($self->is_new())

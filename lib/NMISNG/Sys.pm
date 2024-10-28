@@ -480,7 +480,9 @@ sub init
 		# now: specific model, update yes, collect yes -> set manual model, we don't care about
 		# ping, collect being true or false doesn't really matter but setting a specific model
 		# for no collect means specific model collect does not get set
-		elsif ( $thisnodeconfig->{model} ne "automatic" and $self->{update} )
+		# model eq '' is treated by node as automatic, it is no longer allowed but still needs
+		# to be handled
+		elsif ( $thisnodeconfig->{model} ne "automatic" and $thisnodeconfig->{model} ne "" and $self->{update} )
 		{
 			$loadthis = "Model-$thisnodeconfig->{model}";
 		}
@@ -504,7 +506,7 @@ sub init
 		$self->nmisng->log->debug("loading model $loadthis for node $self->{name}");
 	}
 	
-	# model loading failures are terminal
+	# model loading failures are terminal	
 	return 0 if ( !$self->loadModel( model => $loadthis ) );
 
 	# if a policy is given, override the database timing part of the model data
