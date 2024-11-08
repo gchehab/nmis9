@@ -8307,7 +8307,7 @@ sub collect_services
 				# heuristic: one or more living processes -> service is ok,
 				# no living ones -> down.
 				# living in terms of host-resources mib = runnable or running;
-				# interpretation of notrunnable is not clear.
+				#  notRunnable(3), -- loaded but waiting for event, likely waiting on IO, still considered up / running
 				# invalid is for (short-lived) zombies, which should be ignored.
 
 				# we check: the process name, against regex from Service_Name definition,
@@ -8316,7 +8316,7 @@ sub collect_services
 				# services list is keyed by name, values are lists of process instances
 				my @matchingprocs = grep($_->{hrSWRunName} =~ /^$wantedprocname$/
 																 && "$_->{hrSWRunPath} $_->{hrSWRunParameters}" =~ /$parametercheck/, (map { @$_} (values %services)));
-				my @livingprocs = grep($_->{hrSWRunStatus} =~ /^(running|runnable)$/i, @matchingprocs);
+				my @livingprocs = grep($_->{hrSWRunStatus} =~ /^(running|runnable|notRunnable)$/i, @matchingprocs);
 
 				$self->nmisng->log->debug("collect_services: found "
 																	. scalar(@matchingprocs)
