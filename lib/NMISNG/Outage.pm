@@ -561,13 +561,27 @@ sub check_outages
 
 				for my $propname (keys %{$maybeout->{selector}->{$selcat}})
 				{
-					my $actual = ($selcat eq "config"?
+					my $actual;
+					if ($propname =~ /configuration/){
+						my $config_propname = $propname;
+						$config_propname =~ s/configuration.//;
+						$actual = ($selcat eq "config"?
+												$globalconfig->{$config_propname} :
+												$config_propname eq "nodeModel"? $nodemodel
+												# uuid, cluster_id, name, activated.NMIS, overrides live OUTSIDE of configuration!
+												: $config_propname =~ /^(uuid|cluster_id|name)$/ ?
+												$node->$config_propname
+												: $nodeconfig->{$config_propname});
+					}
+					else{
+						$actual = ($selcat eq "config"?
 												$globalconfig->{$propname} :
 												$propname eq "nodeModel"? $nodemodel
 												# uuid, cluster_id, name, activated.NMIS, overrides live OUTSIDE of configuration!
 												: $propname =~ /^(uuid|cluster_id|name)$/ ?
 												$node->$propname
-												: $nodeconfig->{$propname});
+												: $nodeconfig->{$propname});					
+					}
 					# choices can be: regex, or fixed string, or array of fixed strings
 					my $expected = $maybeout->{selector}->{$selcat}->{$propname};
 
