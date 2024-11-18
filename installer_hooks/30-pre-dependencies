@@ -170,6 +170,19 @@ mongo_or_bust 3 4 0 || exit 1
 
 
 # rhel8 fails to install these using yum, but centos8 is able to install these using yum - restrict to rhel8 nand newer
+#stop mongo here for rhel 9 soo we can cpanm the driver, no need too start it again, setup_mongodb.pl will
+if [ "${OSFLAVOUR}" = "redhat" ]; then
+	if systemctl is-active --quiet mongod; then
+		systemctl stop mongod
+		if [ $? -eq 0 ]; then
+		echo "MongoDB stopped successfully"
+	else
+		echo "Failed to stop MongoDB"
+	exit 1
+		fi
+	fi
+fi
+
 if [ "${OSFLAVOUR}" = "redhat" ]; then
 	if [ "$OS_ISCENTOS" != 1 ] && [ "${OS_MAJOR}" -ge 8 ]; then
         if [ "$CANUSEWEB" = 1 ]; then
